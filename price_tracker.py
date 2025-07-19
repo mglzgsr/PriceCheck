@@ -11,9 +11,9 @@ VARIANTS = {
     "P1S + AMS PRO": "https://uk.store.bambulab.com/products/p1s?id=583795899161169921",
 }
 TARGETS = {
-    "P1S": 450.0,
-    "P1S + AMS": 650.0,
-    "P1S + AMS PRO": 850.0,
+    "P1S": 400.0,
+    "P1S + AMS": 600.0,
+    "P1S + AMS PRO": 800.0,
 }
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
