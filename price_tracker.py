@@ -23,11 +23,19 @@ HEADERS = {"User-Agent": "Mozilla/5.0"}
 def extract_price(html):
     soup = BeautifulSoup(html, "html.parser")
     price_tag = soup.find("span", class_="Price--highlight")
-    if price_tag:
-        match = re.search(r"£([\d,.]+)", price_tag.text)
-        if match:
-            return float(match.group(1).replace(",", ""))
-    return None
+
+    if not price_tag:
+        print("⚠️ Could not find span.Price--highlight")
+        return None
+
+    price_text = price_tag.get_text(strip=True)
+    match = re.search(r"£([\d,.]+)", price_text)
+    if match:
+        return float(match.group(1).replace(",", ""))
+    else:
+        print(f"⚠️ Couldn't parse price from text: {price_text}")
+        return None
+
 
 def fetch_all_prices():
     prices = {}
