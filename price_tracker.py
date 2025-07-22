@@ -55,6 +55,11 @@ def fetch_all_prices():
 
             response.raise_for_status()
             data = response.json()
+            
+            import json
+            print("🔍 Raw Shopify response:")
+            print(json.dumps(data, indent=2))
+
 
             price_gbp = float(data['product']['price']) / 100
             prices[variant] = price_gbp
