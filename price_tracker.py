@@ -41,15 +41,16 @@ def fetch_all_prices():
     prices = {}
     for variant, url in VARIANTS.items():
         try:
+            print(f"Fetching {variant} from {url}")
             resp = requests.get(url, headers=HEADERS, timeout=10)
             resp.raise_for_status()
             price = extract_price(resp.text)
-            if price:
-                prices[variant] = price
+            prices[variant] = price
         except Exception as e:
+            print(f"❌ Error fetching {variant}: {e}")
             prices[variant] = None
-            print(f"Error fetching {variant}: {e}")
     return prices
+
 
 def format_telegram_message(prices):
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
