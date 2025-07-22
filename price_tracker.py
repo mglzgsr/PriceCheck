@@ -1,86 +1,56 @@
 import os
 import requests
-from bs4 import BeautifulSoup
-import datetime
-import re
-
-# 🔧 Config
-VARIANTS = {
-    "P1S": "https://uk.store.bambulab.com/products/p1s?id=578772891943051274",
-    "P1S + AMS": "https://uk.store.bambulab.com/products/p1s?id=578772891943051270",
-    "P1S + AMS PRO": "https://uk.store.bambulab.com/products/p1s?id=583795899161169921",
-}
-TARGETS = {
-    "P1S": 390.0,
-    "P1S + AMS": 600.0,
-    "P1S + AMS PRO": 800.0,
-}
+from datetime import datetime
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
-HEADERS = {"User-Agent": "Mozilla/5.0"}
+URL = "https://uk.store.bambulab.com/products/p1s.js"
 
-def extract_price(html):
-    soup = BeautifulSoup(html, "html.parser")
-    price_tag = soup.find("span", class_="Price--highlight")
+# Friendly labels mapped from Shopify titles
+TITLE_MAP = {
+    "P1S 3D Printer": "P1S",
+    "P1S 3D Printer Combo": "P1S + AMS",
+    "P1S 3D Printer Combo AMS PRO": "P1S + AMS PRO"
+}
 
-    if not price_tag:
-        print("⚠️ Could not find span.Price--highlight")
-        return None
+TARGETS = {
+    "P1S": 390.0,
+    "P1S + AMS": 600.0,
+    "P1S + AMS PRO": 800.0
+}
 
-    price_text = price_tag.get_text(strip=True)
-    match = re.search(r"£([\d,.]+)", price_text)
-    if match:
-        return float(match.group(1).replace(",", ""))
-    else:
-        print(f"⚠️ Couldn't parse price from text: {price_text}")
-        return None
-
-
-def fetch_all_prices():
+def fetch_prices():
     prices = {}
+    try:
+        resp = requests.get(URL, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
 
-    for variant, base_url in VARIANTS.items():
-        json_url = base_url + "&view=json"
+        for variant in data['variants']:
+            # Combine product title + public_title
+            base_title = data['title'].strip()
+            variant_title = variant['public_title'] or ""
+            full_title = f"{base_title} {variant_title}".strip()
 
-        try:
-            print(f"Fetching {variant} from JSON: {json_url}")
-            response = requests.get(json_url, headers={
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-              "Accept": "application/json",
-              "Referer": "https://uk.store.bambulab.com/",
-              "DNT": "1",
-              "Connection": "keep-alive"
-            }, timeout=10)
+            label = TITLE_MAP.get(full_title)
+            if label:
+                prices[label] = variant['price'] / 100  # convert to GBP
 
-            response.raise_for_status()
-            data = response.json()
-            
-            import json
-            print("🔍 Raw Shopify response:")
-            print(json.dumps(data, indent=2))
-
-
-            price_gbp = float(data['product']['price']) / 100
-            prices[variant] = price_gbp
-
-        except Exception as e:
-            print(f"❌ Error fetching {variant}: {e}")
-            prices[variant] = None
+    except Exception as e:
+        print(f"❌ Error fetching prices: {e}")
 
     return prices
 
-
-
 def format_telegram_message(prices):
-    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
     lines = [f"🧵 *Bambu Lab UK - P1S Prices* (`{now}`)\n"]
-    for variant, price in prices.items():
-        if price is None:
+    for variant in ["P1S", "P1S + AMS", "P1S + AMS PRO"]:
+        price = prices.get(variant)
+        if price:
+            alert = " 🔻 _Below target!_" if price < TARGETS[variant] else ""
+            lines.append(f"• *{variant}*: £{price:.2f}{alert}")
+        else:
             lines.append(f"• *{variant}*: ⚠️ Price not found")
-            continue
-        alert = " 🔻 _Below target!_" if price < TARGETS[variant] else ""
-        lines.append(f"• *{variant}*: £{price:.2f}{alert}")
     return "\n".join(lines)
 
 def send_telegram_message(text):
@@ -97,6 +67,10 @@ def send_telegram_message(text):
         print("✅ Telegram message sent")
 
 if __name__ == "__main__":
-    prices = fetch_all_prices()
+    prices = fetch_prices()
     message = format_telegram_message(prices)
-    send_telegram_message(message)
+    print("📨 Message Preview:\n", message)
+    if "£" in message:
+        send_telegram_message(message)
+    else:
+        print("🚫 Skipped sending — no valid prices extracted")
