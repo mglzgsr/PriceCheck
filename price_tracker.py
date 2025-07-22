@@ -45,7 +45,14 @@ def fetch_all_prices():
 
         try:
             print(f"Fetching {variant} from JSON: {json_url}")
-            response = requests.get(json_url, headers=HEADERS, timeout=10)
+            response = requests.get(json_url, headers={
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+              "Accept": "application/json",
+              "Referer": "https://uk.store.bambulab.com/",
+              "DNT": "1",
+              "Connection": "keep-alive"
+            }, timeout=10)
+
             response.raise_for_status()
             data = response.json()
 
