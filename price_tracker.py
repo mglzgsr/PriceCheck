@@ -39,17 +39,25 @@ def extract_price(html):
 
 def fetch_all_prices():
     prices = {}
-    for variant, url in VARIANTS.items():
+
+    for variant, base_url in VARIANTS.items():
+        json_url = base_url + "&view=json"
+
         try:
-            print(f"Fetching {variant} from {url}")
-            resp = requests.get(url, headers=HEADERS, timeout=10)
-            resp.raise_for_status()
-            price = extract_price(resp.text)
-            prices[variant] = price
+            print(f"Fetching {variant} from JSON: {json_url}")
+            response = requests.get(json_url, headers=HEADERS, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+
+            price_gbp = float(data['product']['price']) / 100
+            prices[variant] = price_gbp
+
         except Exception as e:
             print(f"❌ Error fetching {variant}: {e}")
             prices[variant] = None
+
     return prices
+
 
 
 def format_telegram_message(prices):
