@@ -9,6 +9,10 @@ URL = "https://uk.store.bambulab.com/products/p1s.js"
 print("✅ Running version from:", __file__)
 print(f"🔗 Fetching from URL: {URL}")
 
+resp = requests.get(URL, timeout=10, allow_redirects=True)
+print(f"📍 Final URL after redirect: {resp.url}")
+
+
 # Friendly labels mapped from Shopify titles
 TITLE_MAP = {
     "P1S 3D Printer": "P1S",
