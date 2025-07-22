@@ -6,6 +6,9 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 URL = "https://uk.store.bambulab.com/products/p1s.js"
 
+print("✅ Running version from:", __file__)
+print(f"🔗 Fetching from URL: {URL}")
+
 # Friendly labels mapped from Shopify titles
 TITLE_MAP = {
     "P1S 3D Printer": "P1S",
