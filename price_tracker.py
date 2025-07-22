@@ -6,12 +6,17 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 URL = "https://uk.store.bambulab.com/products/p1s.js"
 
-print("✅ Running version from:", __file__)
-print(f"🔗 Fetching from URL: {URL}")
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    "Referer": "https://uk.store.bambulab.com/",
+    "Accept": "application/json",
+    "X-Region": "GB",         # Try forcing region
+    "X-Shopify-Client-IP": "81.2.69.142",  # Random UK IP (can help bypass GeoIP routing)
+}
 
-resp = requests.get(URL, timeout=10, allow_redirects=True)
-print(f"📍 Final URL after redirect: {resp.url}")
-
+resp = requests.get(URL, headers=headers, timeout=10, allow_redirects=True)
+print("📍 Final URL after spoofing:", resp.url)
+print("📄 First 200 chars of content:\n", resp.text[:200])
 
 # Friendly labels mapped from Shopify titles
 TITLE_MAP = {
